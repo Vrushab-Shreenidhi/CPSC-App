@@ -8,5 +8,5 @@ Users can scan any product's barcode in-person to instantly check it against the
 Users can file safety reports against any product before an official recall exists. Reports aggregate over time — once enough users flag the same product, it gets surfaced as a community warning. This allows the app to detect emerging safety hazards faster than the official CPSC process.
 
 
-The Big Differentiator
+**The Big Differentiator**
 Most recall tools are reactive — you have to go looking. This app is proactive, telling you the moment something in your home becomes dangerous, and predictive, surfacing potential hazards before they become official recalls.
