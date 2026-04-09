@@ -16,13 +16,13 @@
       --surface: #c8dadf; /** Light tiles */
       --surface2: #e4eaf0; /** Lighter blue used for hover states */
       --surface3: #ffffff; /** Selected nav item bg */
-      --accent: #C8102E; 
-      --accent2: #3fb68b;
-      --danger: #C8102E; 
-      --warn: #f0814a;
+      --accent: #C8102E; /** primary accent color used for highlights and points */
+      --accent2: #3fb68b; /** secondary accent color used for safe items and progress bars */
+      --danger: #C8102E; /** accent color used for danger/recalled items */
+      --warn: #f0814a; /** accent color used for warnings */
       --text: #C8102E; /** accent color used for text */
-      --text2: #ffffff;
-      --text3: #484f58;
+      --text2: #010311; /** secondary text color used for metadata and hints */
+      --text3: #484f58; /** tertiary text color used for disabled text and borders */
       --border: rgba(255, 255, 255, 0.963);
       --font-family: 'Source Sans 3', 'Gill Sans', sans-serif;
       --sans: 'DM Sans', sans-serif;
@@ -550,8 +550,8 @@
     .new-report-btn {
       width: 100%;
       padding: 13px;
-      background: none;
-      border: 1px dashed rgba(255,255,255,0.12);
+      background: var(--text);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       color: var(--text2);
       font-family: var(--sans);
@@ -564,7 +564,7 @@
       gap: 6px;
       margin-bottom: 12px;
     }
-    .new-report-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .new-report-btn:hover { border-color: var(--accent); background: var(--surface2); color: var(--accent); }
 
     .report-card {
       background: var(--surface);
@@ -675,7 +675,7 @@
 
     .tier-row {
       display: flex;
-      background: var(#e4eaf0);
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
@@ -691,6 +691,11 @@
     }
     .tier:last-child { border-right: none; }
     .tier.current { background: rgba(240,180,41,0.07); }
+
+    .tier:nth-child(1) { background-color: #c8dadf;}
+    .tier:nth-child(2) { background-color: #4A90C4;}
+    .tier:nth-child(3) { background-color: #F0814A;}
+    .tier:nth-child(4) { background-color: #C8102E;}
 
     .tier-name {
       display: block;
@@ -803,6 +808,76 @@
     .modal-close:hover {
       background: var(--surface2);
       border-color: var(--text3);
+    }
+
+    .report-modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .report-modal-subtitle {
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 16px;
+    }
+
+    .report-form {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      color: var(--text2);
+      font-weight: 600;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text2);
+      font-family: var(--sans);
+      font-size: 13px;
+      padding: 10px 11px;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .form-actions .btn-secondary,
+    .form-actions .btn-primary {
+      flex: 1;
     }
 
 
@@ -991,7 +1066,7 @@
     <div class="screen" id="screen-community">
       <div class="section-title">Community Safety Board</div>
 
-      <button class="new-report-btn" onclick="alert('Open report submission form — +25 pts for verified reports!')">
+      <button class="new-report-btn" onclick="openCommunityModal()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
         Submit a Safety Report · +25 pts
       </button>
@@ -1055,7 +1130,7 @@
       <div class="profile-hero">
         <div class="avatar">JS</div>
         <div style="font-size:17px;font-weight:500">Jordan S.</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:3px;font-family:var(--mono)">Member since Jan 2024 · Dale City, VA</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px;font-family:var(--mono)">Member since Mar 2026 · Fairfax, VA</div>
         <div class="progress-bar-outer"><div class="progress-bar-inner"></div></div>
         <div class="progress-labels">
           <span>★ Guardian · 2,340 pts</span>
@@ -1113,55 +1188,37 @@
   <div class="modal-overlay" id="community-modal">
     <div class="modal-content">
       <button class="modal-close" onclick="closeCommunityModal()">✕</button>
-      <div style="padding: 14px 16px 20px;">
-        <div class="screen" id="screen-community-modal">
-          <div class="section-title">Community Safety Board</div>
+      <form class="report-form" onsubmit="submitCommunityReport(event)">
+        <div class="report-modal-title">Submit a Safety Report</div>
+        <div class="report-modal-subtitle">Share what happened so others can check their products. Verified reports earn +25 points.</div>
 
-          <button class="new-report-btn" onclick="alert('Open report submission form — +25 pts for verified reports!')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            Submit a Safety Report · +25 pts
-          </button>
-
-          <div class="report-card">
-            <div class="report-top">
-              <span class="report-tag fire">Fire Hazard</span>
-              <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">2h ago</span>
-            </div>
-            <div class="report-title">Sparks from Voltex charger — cord melted overnight</div>
-            <div class="report-body">Plugged in overnight and woke up to a burning smell. The cord near the brick was melted. Matched the CPSC #24-018 recall exactly. Please check yours immediately!</div>
-            <div class="report-footer">
-              <span class="report-author">@safemom_dc · 47 karma</span>
-              <button class="vote-btn" id="vote-1-m" onclick="castVote('vote-1-m', 33)">▲ 33</button>
-            </div>
-          </div>
-
-          <div class="report-card">
-            <div class="report-top">
-              <span class="report-tag injury">Injury Risk</span>
-              <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">1d ago</span>
-            </div>
-            <div class="report-title">Kids' helmet strap released at speed</div>
-            <div class="report-body">Brand is RideSafe, model Turbo Jr (2022). The buckle gave way mid-ride. No current recall match but worth investigating. Already submitted a report to CPSC directly.</div>
-            <div class="report-footer">
-              <span class="report-author">@dadof3_nova · 112 karma</span>
-              <button class="vote-btn" id="vote-2-m" onclick="castVote('vote-2-m', 21)">▲ 21</button>
-            </div>
-          </div>
-
-          <div class="report-card">
-            <div class="report-top">
-              <span class="report-tag electrical">Electrical</span>
-              <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">3d ago</span>
-            </div>
-            <div class="report-title">Smart plug randomly trips 20A breaker</div>
-            <div class="report-body">GoPlug Mini (2023 batch) keeps tripping the breaker every few days with nothing else on the circuit. Reached out to the brand with no response. Anyone else seeing this?</div>
-            <div class="report-footer">
-              <span class="report-author">@techmom_va · 88 karma</span>
-              <button class="vote-btn" id="vote-3-m" onclick="castVote('vote-3-m', 15)">▲ 15</button>
-            </div>
-          </div>
+        <div class="form-row">
+          <label class="form-label" for="report-product">Product name</label>
+          <input class="form-input" id="report-product" name="product" type="text" placeholder="Example: Voltex USB-C Charger 65W" required>
         </div>
-      </div>
+
+        <div class="form-row">
+          <label class="form-label" for="report-category">Issue category</label>
+          <select class="form-select" id="report-category" name="category" required>
+            <option value="" disabled selected>Select a category</option>
+            <option value="fire hazard">Fire Hazard</option>
+            <option value="injury risk">Injury Risk</option>
+            <option value="electrical">Electrical</option>
+            <option value="choking risk">Choking Risk</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label" for="report-details">What happened?</label>
+          <textarea class="form-textarea" id="report-details" name="details" placeholder="Include model, lot/batch info, and the safety issue you observed." required></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-secondary" type="button" onclick="closeCommunityModal()">Cancel</button>
+          <button class="btn-primary" type="submit">Submit Report</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1256,6 +1313,17 @@
   function closeCommunityModal() {
     const modal = document.getElementById('community-modal');
     modal.classList.remove('active');
+  }
+
+  function submitCommunityReport(event) {
+    event.preventDefault();
+    const form = event.target;
+    const product = form.product.value.trim();
+    const category = form.category.value;
+    addPoints(25);
+    closeCommunityModal();
+    form.reset();
+    alert('Report submitted: ' + product + ' (' + category + '). Thank you for protecting the community. +25 pts added.');
   }
 
   // Close modal when clicking on the overlay background
