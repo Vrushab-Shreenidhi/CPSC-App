@@ -1,4 +1,4 @@
-# CPSC-App
+# SafeCheck App (CPSC-App)
 A CPSC App that features:
 
 **Barcode Scanner & Personal Inventory**
