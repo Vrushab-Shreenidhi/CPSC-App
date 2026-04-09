@@ -11,18 +11,18 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0d1117;
-      --surface: #161b22;
-      --surface2: #21262d;
-      --surface3: #30363d;
-      --accent: #f0b429;
+      --bg: #ffffff;
+      --surface: #e1e1e1;
+      --surface2: #e4eaf0;
+      --surface3: #C8102E;
+      --accent: #ffffff;
       --accent2: #3fb68b;
       --danger: #e85555;
       --warn: #f0814a;
-      --text: #e6edf3;
-      --text2: #8b949e;
+      --text: #1B3A6B;
+      --text2: #C8102E;
       --text3: #484f58;
-      --border: rgba(255,255,255,0.08);
+      --border: rgba(255, 255, 255, 0.963);
       --mono: 'Space Mono', monospace;
       --sans: 'DM Sans', sans-serif;
       --radius: 12px;
@@ -31,7 +31,7 @@
 
     html, body {
       height: 100%;
-      background: #080b10;
+      background: #433631;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -91,6 +91,20 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+
+    .logo-img {
+      width: 32px;
+      height: 32px;
+      margin-right: 10px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .logo-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0;
     }
 
     .logo {
@@ -732,6 +746,59 @@
     .activity-row:last-child { border-bottom: none; }
     .activity-row span:first-child { color: var(--text2); }
     .activity-row span:last-child  { font-family: var(--mono); }
+
+    /* ────────────────────────────────────────
+       MODAL OVERLAY
+    ──────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg);
+      border-radius: var(--radius);
+      width: 90%;
+      max-width: 430px;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1000;
+      transition: all 0.15s;
+    }
+
+    .modal-close:hover {
+      background: var(--surface2);
+      border-color: var(--text3);
+    }
   </style>
 </head>
 <body>
@@ -750,7 +817,10 @@
 
   <!-- Header -->
   <div class="header">
-    <div class="logo">safe<span>check</span><sub>by CPSC</sub></div>
+    <div class="logo-wrapper">
+      <img src="CPSC Logo.png" alt="CPSC" class="logo-img">
+      <div class="logo">safe<span>check</span><sub>by CPSC</sub></div>
+    </div>
     <div class="header-badge">★ Guardian</div>
   </div>
 
@@ -773,7 +843,7 @@
       </svg>
       Inventory
     </button>
-    <button class="nav-btn" onclick="showScreen('community', this)">
+    <button class="nav-btn" onclick="openCommunityModal()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
       </svg>
@@ -909,8 +979,8 @@
       </div>
     </div>
 
-    <!-- ── COMMUNITY SCREEN ── -->
-    <div class="screen" id="screen-community">
+    <!-- ── COMMUNITY SCREEN (hidden, shown in modal) ── -->
+    <div class="screen" id="screen-community" style="display:none">
       <div class="section-title">Community Safety Board</div>
 
       <button class="new-report-btn" onclick="alert('Open report submission form — +25 pts for verified reports!')">
@@ -1028,6 +1098,65 @@
     </div>
 
   </div><!-- /content -->
+
+  <!-- ══════════════════════════════════
+       COMMUNITY MODAL
+  ══════════════════════════════════ -->
+  <div class="modal-overlay" id="community-modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeCommunityModal()">✕</button>
+      <div style="padding: 14px 16px 20px;">
+        <div class="screen" id="screen-community-modal">
+          <div class="section-title">Community Safety Board</div>
+
+          <button class="new-report-btn" onclick="alert('Open report submission form — +25 pts for verified reports!')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Submit a Safety Report · +25 pts
+          </button>
+
+          <div class="report-card">
+            <div class="report-top">
+              <span class="report-tag fire">Fire Hazard</span>
+              <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">2h ago</span>
+            </div>
+            <div class="report-title">Sparks from Voltex charger — cord melted overnight</div>
+            <div class="report-body">Plugged in overnight and woke up to a burning smell. The cord near the brick was melted. Matched the CPSC #24-018 recall exactly. Please check yours immediately!</div>
+            <div class="report-footer">
+              <span class="report-author">@safemom_dc · 47 karma</span>
+              <button class="vote-btn" id="vote-1-m" onclick="castVote('vote-1-m', 33)">▲ 33</button>
+            </div>
+          </div>
+
+          <div class="report-card">
+            <div class="report-top">
+              <span class="report-tag injury">Injury Risk</span>
+              <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">1d ago</span>
+            </div>
+            <div class="report-title">Kids' helmet strap released at speed</div>
+            <div class="report-body">Brand is RideSafe, model Turbo Jr (2022). The buckle gave way mid-ride. No current recall match but worth investigating. Already submitted a report to CPSC directly.</div>
+            <div class="report-footer">
+              <span class="report-author">@dadof3_nova · 112 karma</span>
+              <button class="vote-btn" id="vote-2-m" onclick="castVote('vote-2-m', 21)">▲ 21</button>
+            </div>
+          </div>
+
+          <div class="report-card">
+            <div class="report-top">
+              <span class="report-tag electrical">Electrical</span>
+              <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">3d ago</span>
+            </div>
+            <div class="report-title">Smart plug randomly trips 20A breaker</div>
+            <div class="report-body">GoPlug Mini (2023 batch) keeps tripping the breaker every few days with nothing else on the circuit. Reached out to the brand with no response. Anyone else seeing this?</div>
+            <div class="report-footer">
+              <span class="report-author">@techmom_va · 88 karma</span>
+              <button class="vote-btn" id="vote-3-m" onclick="castVote('vote-3-m', 15)">▲ 15</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /app-shell -->
 
 <script>
@@ -1103,6 +1232,25 @@
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
   }
+
+  /* ── Community Modal ── */
+  function openCommunityModal() {
+    const modal = document.getElementById('community-modal');
+    modal.classList.add('active');
+  }
+
+  function closeCommunityModal() {
+    const modal = document.getElementById('community-modal');
+    modal.classList.remove('active');
+  }
+
+  // Close modal when clicking on the overlay background
+  document.addEventListener('click', function(event) {
+    const modal = document.getElementById('community-modal');
+    if (event.target === modal) {
+      closeCommunityModal();
+    }
+  });
 
   /* ── Scanner ── */
   function simulateScan() {
