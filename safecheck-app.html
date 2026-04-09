@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0" />
+  <title>SafeCheck — CPSC Product Safety App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.google.com/share?selection.family=Source+Sans+3" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #1B3A6B; /** background color */
+      --nav-bg: #4A90C4; /** nav background */
+      --surface: #c8dadf; /** Light tiles */
+      --surface2: #e4eaf0; /** Lighter blue used for hover states */
+      --surface3: #ffffff; /** Selected nav item bg */
+      --accent: #C8102E; 
+      --accent2: #3fb68b;
+      --danger: #C8102E; 
+      --warn: #f0814a;
+      --text: #C8102E; /** accent color used for text */
+      --text2: #ffffff;
+      --text3: #484f58;
+      --border: rgba(255, 255, 255, 0.963);
+      --font-family: 'Source Sans 3', 'Gill Sans', sans-serif;
+      --sans: 'DM Sans', sans-serif;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #433631;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--sans);
+      margin: 0;
+      padding: 0;
+    }
+
+    .app-shell {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      min-height: 100vh;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── Status Bar ── */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px 0;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text2);
+    }
+
+    .score-pill {
+      background: linear-gradient(135deg, rgba(240,180,41,0.12), rgba(63,182,139,0.08));
+      border: 1px solid rgba(240,180,41,0.4);
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .score-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 14px 20px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo-img {
+      width: 32px;
+      height: 32px;
+      margin-right: 10px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .logo-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .logo {
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+
+    .logo span { color: var(--accent); }
+
+    .logo sub {
+      font-size: 10px;
+      color: var(--text2);
+      font-weight: 400;
+      letter-spacing: 0;
+      vertical-align: baseline;
+      margin-left: 4px;
+    }
+
+    .header-badge {
+      background: rgba(240,180,41,0.1);
+      border: 1px solid rgba(240,180,41,0.35);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* ── Nav ── */
+    .nav {
+      display: flex;
+      background: var(--nav-bg);
+      border-radius: var(--radius);
+      margin: 0 16px 4px;
+      padding: 4px;
+      gap: 2px;
+    }
+
+    .nav-btn {
+      flex: 1;
+      padding: 8px 4px;
+      background: none;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--sans);
+      font-size: 11px;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .nav-btn svg {
+      width: 18px; height: 18px;
+      transition: color 0.18s;
+    }
+
+    .nav-btn.active {
+      background: var(--surface3);
+      color: var(--text);
+    }
+
+    .nav-btn.active svg { color: var(--accent); }
+
+    /* ── Content ── */
+    .content {
+      flex: 1;
+      padding: 14px 16px;
+      overflow-y: auto;
+    }
+
+    .content::-webkit-scrollbar { width: 3px; }
+    .content::-webkit-scrollbar-track { background: transparent; }
+    .content::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
+
+    .screen { display: none; animation: fadeIn 0.2s ease; }
+    .screen.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Shared ── */
+    .section-title {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text2);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    .btn-primary {
+      flex: 1;
+      background: var(--accent);
+      color: #0d1117;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-family: var(--sans);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--text3); color: var(--text); }
+
+    /* ────────────────────────────────────────
+       SCAN SCREEN
+    ──────────────────────────────────────── */
+    .scanner-frame {
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 14px;
+      border: 1px solid var(--border);
+    }
+
+    .scan-viewport {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background: #050a10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scan-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(240,180,41,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(240,180,41,0.04) 1px, transparent 1px);
+      background-size: 30px 30px;
+    }
+
+    .scan-corners {
+      position: absolute;
+      width: 180px;
+      height: 120px;
+      pointer-events: none;
+    }
+
+    .scan-corners::before, .scan-corners::after,
+    .scan-corners > span::before, .scan-corners > span::after {
+      content: '';
+      position: absolute;
+      width: 22px; height: 22px;
+      border-color: var(--accent);
+      border-style: solid;
+    }
+    .scan-corners::before  { top: 0;    left: 0;  border-width: 2px 0 0 2px; }
+    .scan-corners::after   { top: 0;    right: 0; border-width: 2px 2px 0 0; }
+    .scan-corners > span::before { bottom: 0; left: 0;  border-width: 0 0 2px 2px; }
+    .scan-corners > span::after  { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+    .scan-line {
+      position: absolute;
+      width: 160px;
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      animation: scanline 2s ease-in-out infinite;
+    }
+
+    @keyframes scanline {
+      0%, 100% { transform: translateY(-45px); opacity: 0.3; }
+      50%       { transform: translateY(45px);  opacity: 1; }
+    }
+
+    .scan-label {
+      position: absolute;
+      bottom: 14px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: 3px;
+      opacity: 0.7;
+    }
+
+    .scan-actions {
+      padding: 12px 14px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .manual-input {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      border: 1px solid var(--border);
+      transition: border-color 0.15s;
+    }
+    .manual-input:focus-within { border-color: rgba(240,180,41,0.35); }
+
+    .manual-input input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      outline: none;
+    }
+    .manual-input input::placeholder { color: var(--text3); }
+
+    .manual-go {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 2px 4px;
+    }
+
+    .hint-text {
+      font-size: 12px;
+      color: var(--text3);
+      text-align: center;
+      margin-top: -4px;
+      margin-bottom: 14px;
+    }
+
+    /* Result ── */
+    .points-flash {
+      background: linear-gradient(135deg, rgba(240,180,41,0.1), rgba(63,182,139,0.06));
+      border: 1px solid rgba(240,180,41,0.2);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      animation: fadeUp 0.35s ease;
+    }
+
+    .pts-val {
+      font-family: var(--mono);
+      font-size: 22px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .result-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      margin-bottom: 14px;
+      animation: fadeUp 0.3s ease;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-header {
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .product-icon {
+      width: 46px; height: 46px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--mono);
+      margin-top: 5px;
+    }
+    .status-badge.recalled { background: rgba(232,85,85,0.15);   color: var(--danger); border: 1px solid rgba(232,85,85,0.3); }
+    .status-badge.warning  { background: rgba(240,129,74,0.15);  color: var(--warn);   border: 1px solid rgba(240,129,74,0.3); }
+    .status-badge.safe     { background: rgba(63,182,139,0.15);  color: var(--accent2);border: 1px solid rgba(63,182,139,0.3); }
+
+    .result-body    { padding: 14px 16px; }
+    .result-detail  { font-size: 13px; color: var(--text2); line-height: 1.65; }
+    .result-detail strong { color: var(--danger); font-weight: 500; }
+    .result-detail .warn-strong { color: var(--warn); font-weight: 500; }
+
+    .result-actions { display: flex; gap: 8px; padding: 0 16px 14px; flex-wrap: wrap; }
+
+    .action-btn {
+      flex: 1;
+      min-width: 90px;
+      padding: 9px 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text2);
+      font-family: var(--sans);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      text-align: center;
+    }
+    .action-btn:hover { border-color: var(--text3); color: var(--text); }
+    .action-btn.danger  { border-color: rgba(232,85,85,0.35);  color: var(--danger);  background: rgba(232,85,85,0.07); }
+    .action-btn.success { border-color: rgba(63,182,139,0.35); color: var(--accent2); background: rgba(63,182,139,0.07); }
+    .action-btn.danger:hover  { background: rgba(232,85,85,0.14); }
+    .action-btn.success:hover { background: rgba(63,182,139,0.14); }
+
+    .action-confirm {
+      font-size: 13px;
+      color: var(--accent2);
+      padding: 6px 2px;
+      line-height: 1.5;
+    }
+
+    /* ────────────────────────────────────────
+       INVENTORY SCREEN
+    ──────────────────────────────────────── */
+    .inv-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .add-btn {
+      background: var(--accent);
+      color: #0d1117;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .add-btn:hover { opacity: 0.85; }
+
+    .inv-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-num { font-family: var(--mono); font-size: 24px; font-weight: 700; }
+    .stat-num.red   { color: var(--danger); }
+    .stat-num.amber { color: var(--warn); }
+    .stat-num.green { color: var(--accent2); }
+    .stat-label { font-size: 10px; color: var(--text2); margin-top: 3px; letter-spacing: 0.5px; }
+
+    .item-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+
+    .inv-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .inv-item:hover { background: var(--surface2); }
+    .inv-item.recalled     { border-left: 3px solid var(--danger); }
+    .inv-item.warning-item { border-left: 3px solid var(--warn); }
+    .inv-item.safe-item    { border-left: 3px solid var(--accent2); }
+
+    .item-icon { font-size: 22px; width: 36px; text-align: center; }
+
+    .item-info { flex: 1; min-width: 0; }
+    .item-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-meta { font-size: 11px; color: var(--text2); margin-top: 2px; font-family: var(--mono); }
+
+    .mini-badge {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .mini-badge.red   { background: var(--danger); box-shadow: 0 0 6px rgba(232,85,85,0.6); }
+    .mini-badge.amber { background: var(--warn); }
+    .mini-badge.green { background: var(--accent2); }
+
+    /* ────────────────────────────────────────
+       COMMUNITY SCREEN
+    ──────────────────────────────────────── */
+    .new-report-btn {
+      width: 100%;
+      padding: 13px;
+      background: none;
+      border: 1px dashed rgba(255,255,255,0.12);
+      border-radius: var(--radius);
+      color: var(--text2);
+      font-family: var(--sans);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .new-report-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .report-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .report-card:hover { background: var(--surface2); border-color: var(--surface3); }
+
+    .report-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .report-tag {
+      font-size: 10px;
+      border-radius: 20px;
+      padding: 3px 9px;
+      font-family: var(--mono);
+      font-weight: 700;
+    }
+    .report-tag.fire       { background: rgba(232,85,85,0.15);  color: var(--danger); }
+    .report-tag.injury     { background: rgba(240,129,74,0.15); color: var(--warn); }
+    .report-tag.electrical { background: rgba(240,180,41,0.15); color: var(--accent); }
+
+    .report-title { font-size: 14px; font-weight: 500; margin-bottom: 6px; line-height: 1.4; }
+    .report-body  { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+    .report-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .report-author { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+
+    .vote-btn {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 11px;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--mono);
+    }
+    .vote-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .vote-btn.voted { border-color: var(--accent); color: var(--accent); background: rgba(240,180,41,0.08); }
+
+    /* ────────────────────────────────────────
+       PROFILE SCREEN
+    ──────────────────────────────────────── */
+    .profile-hero {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 22px 20px 18px;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .avatar {
+      width: 66px; height: 66px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(240,180,41,0.25), rgba(63,182,139,0.25));
+      border: 2px solid rgba(240,180,41,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 0 auto 12px;
+    }
+
+    .progress-bar-outer {
+      background: var(--surface2);
+      border-radius: 20px;
+      height: 6px;
+      margin: 12px 0 6px;
+      overflow: hidden;
+    }
+
+    .progress-bar-inner {
+      height: 100%;
+      border-radius: 20px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      width: 68%;
+      transition: width 0.6s ease;
+    }
+
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text3);
+      font-family: var(--mono);
+    }
+
+    .tier-row {
+      display: flex;
+      background: var(#e4eaf0);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .tier {
+      flex: 1;
+      padding: 10px 6px;
+      text-align: center;
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+    .tier:last-child { border-right: none; }
+    .tier.current { background: rgba(240,180,41,0.07); }
+
+    .tier-name {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text2);
+    }
+    .tier.current .tier-name { color: var(--accent); }
+
+    .tier-pts {
+      display: block;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text3);
+      margin-top: 3px;
+    }
+
+    .rewards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .reward-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      transition: border-color 0.15s;
+      cursor: pointer;
+    }
+    .reward-card:hover:not(.locked) { border-color: var(--surface3); }
+    .reward-card.locked { opacity: 0.45; cursor: default; }
+
+    .reward-icon { font-size: 24px; margin-bottom: 2px; }
+    .reward-name { font-size: 13px; font-weight: 500; line-height: 1.3; }
+    .reward-pts  { font-family: var(--mono); font-size: 10px; color: var(--accent); }
+
+    .activity-table {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .activity-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .activity-row:last-child { border-bottom: none; }
+    .activity-row span:first-child { color: var(--text2); }
+    .activity-row span:last-child  { font-family: var(--mono); }
+
+    /* ────────────────────────────────────────
+       MODAL OVERLAY
+    ──────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg);
+      border-radius: var(--radius);
+      width: 90%;
+      max-width: 430px;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1000;
+      transition: all 0.15s;
+    }
+
+    .modal-close:hover {
+      background: var(--surface2);
+      border-color: var(--text3);
+    }
+
+
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span id="clock">9:41</span>
+    <div class="score-pill">
+      <div class="score-dot"></div>
+      <span id="total-pts">2,340 pts</span>
+    </div>
+    <span>●●●</span>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-wrapper">
+      <img src="CPSC Logo.png" alt="CPSC" class="logo-img">
+      <div class="logo">safe<span>check</span><sub>by CPSC</sub></div>
+    </div>
+    <div class="header-badge">★ Guardian</div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showScreen('scan', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+        <rect x="14" y="17" width="3" height="4" rx="0.5"/>
+        <rect x="19" y="14" width="2" height="3" rx="0.5"/>
+      </svg>
+      Scan
+    </button>
+    <button class="nav-btn" onclick="showScreen('inventory', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M3 9h18M3 15h18M9 3v18"/>
+      </svg>
+      Inventory
+    </button>
+    <button class="nav-btn" onclick="showScreen('community', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
+      </svg>
+      Community
+    </button>
+    <button class="nav-btn" onclick="showScreen('profile', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/>
+      </svg>
+      Profile
+    </button>
+  </nav>
+
+  <!-- ══════════════════════════════════
+       CONTENT
+  ══════════════════════════════════ -->
+  <div class="content">
+
+    <!-- ── SCAN SCREEN ── -->
+    <div class="screen active" id="screen-scan">
+
+      <!-- Idle State -->
+      <div id="scan-idle">
+        <div class="scanner-frame">
+          <div class="scan-viewport">
+            <div class="scan-grid"></div>
+            <div class="scan-corners"><span></span></div>
+            <div class="scan-line"></div>
+            <div class="scan-label">ALIGN BARCODE</div>
+          </div>
+          <div class="scan-actions">
+            <button class="btn-primary" onclick="simulateScan()">Scan Item</button>
+            <button class="btn-primary" onclick="simulateScanUnknown()">Scan Unknown Item</button>
+            <button class="btn-secondary">Flash</button>
+          </div>
+        </div>
+
+        <div class="manual-input">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5">
+            <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input type="text" id="manual-bar" placeholder="Enter barcode or product name…" />
+          <button class="manual-go" onclick="simulateScan(document.getElementById('manual-bar').value)">Go →</button>
+        </div>
+
+        <p class="hint-text">+10 pts per scan · +30 bonus pts when you act on a recall</p>
+      </div>
+
+      <!-- Result State -->
+      <div id="scan-result" style="display:none">
+        <div class="points-flash">
+          <div>
+            <div style="font-size:12px;color:var(--text2)">Scan complete</div>
+            <div style="font-size:12px;color:var(--accent2);margin-top:2px" id="result-status-msg">Item checked against CPSC database</div>
+          </div>
+          <div class="pts-val" id="result-pts">+10</div>
+        </div>
+
+        <div class="result-card">
+          <div class="result-header">
+            <div class="product-icon" id="result-icon">🪑</div>
+            <div style="flex:1">
+              <div style="font-size:15px;font-weight:500" id="result-name">Product Name</div>
+              <div style="font-size:11px;color:var(--text2);font-family:var(--mono);margin:3px 0" id="result-sku">SKU</div>
+              <div class="status-badge recalled" id="result-badge">⚠ RECALLED</div>
+            </div>
+          </div>
+          <div class="result-body">
+            <div class="result-detail" id="result-detail">Details loading…</div>
+          </div>
+          <div class="result-actions" id="result-actions">
+            <button class="action-btn danger"   onclick="confirmAction('dispose')">Mark Disposed</button>
+            <button class="action-btn"           onclick="addToInventoryFromScan()">Add to Inventory</button>
+            <button class="action-btn success"   onclick="confirmAction('replaced')">Got Replacement</button>
+          </div>
+        </div>
+
+        <button class="btn-secondary" style="width:100%" onclick="resetScan()">← Scan Another</button>
+      </div>
+    </div>
+
+    <!-- ── INVENTORY SCREEN ── -->
+    <div class="screen" id="screen-inventory">
+      <div class="inv-header">
+        <div>
+          <div style="font-size:16px;font-weight:500">My Items</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px" id="inv-count">8 products tracked</div>
+        </div>
+        <button class="add-btn" onclick="showScreen('scan', document.querySelectorAll('.nav-btn')[0])">+ Scan New</button>
+      </div>
+
+      <div class="inv-stats">
+        <div class="stat-card"><div class="stat-num red"   id="stat-recalled">2</div><div class="stat-label">Recalled</div></div>
+        <div class="stat-card"><div class="stat-num amber" id="stat-warning">1</div><div class="stat-label">Warning</div></div>
+        <div class="stat-card"><div class="stat-num green" id="stat-safe">5</div><div class="stat-label">Safe</div></div>
+      </div>
+
+      <div class="section-title">Action Required</div>
+      <div class="item-list" id="recalled-list">
+        <div class="inv-item recalled">
+          <div class="item-icon">🪑</div>
+          <div class="item-info">
+            <div class="item-name">Braxton Folding Chair Pro</div>
+            <div class="item-meta">Scanned Mar 12 · CPSC #24-002</div>
+          </div>
+          <div class="mini-badge red"></div>
+        </div>
+        <div class="inv-item recalled">
+          <div class="item-icon">🔌</div>
+          <div class="item-info">
+            <div class="item-name">Voltex USB-C Charger 65W</div>
+            <div class="item-meta">Scanned Feb 28 · CPSC #24-018</div>
+          </div>
+          <div class="mini-badge red"></div>
+        </div>
+        <div class="inv-item warning-item">
+          <div class="item-icon">🕯️</div>
+          <div class="item-info">
+            <div class="item-name">Luna Candle Set (3pk)</div>
+            <div class="item-meta">Scanned Jan 5 · Safety Advisory</div>
+          </div>
+          <div class="mini-badge amber"></div>
+        </div>
+      </div>
+
+      <div class="section-title">Safe Items</div>
+      <div class="item-list">
+        <div class="inv-item safe-item"><div class="item-icon">🍳</div><div class="item-info"><div class="item-name">Calphalon Skillet 10"</div><div class="item-meta">Scanned Jan 12</div></div><div class="mini-badge green"></div></div>
+        <div class="inv-item safe-item"><div class="item-icon">🧸</div><div class="item-info"><div class="item-name">Fisher-Price Activity Cube</div><div class="item-meta">Scanned Dec 22</div></div><div class="mini-badge green"></div></div>
+        <div class="inv-item safe-item"><div class="item-icon">💡</div><div class="item-info"><div class="item-name">GE Smart Bulb 4-Pack</div><div class="item-meta">Scanned Dec 18</div></div><div class="mini-badge green"></div></div>
+        <div class="inv-item safe-item"><div class="item-icon">🔪</div><div class="item-info"><div class="item-name">OXO Chef's Knife 8"</div><div class="item-meta">Scanned Nov 30</div></div><div class="mini-badge green"></div></div>
+        <div class="inv-item safe-item"><div class="item-icon">🪣</div><div class="item-info"><div class="item-name">Rubbermaid Storage Bin</div><div class="item-meta">Scanned Nov 14</div></div><div class="mini-badge green"></div></div>
+      </div>
+    </div>
+
+    <!-- ── COMMUNITY SCREEN ── -->
+    <div class="screen" id="screen-community">
+      <div class="section-title">Community Safety Board</div>
+
+      <button class="new-report-btn" onclick="alert('Open report submission form — +25 pts for verified reports!')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        Submit a Safety Report · +25 pts
+      </button>
+
+      <div class="report-card">
+        <div class="report-top">
+          <span class="report-tag fire">Fire Hazard</span>
+          <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">2h ago</span>
+        </div>
+        <div class="report-title">Sparks from Voltex charger — cord melted overnight</div>
+        <div class="report-body">Plugged in overnight and woke up to a burning smell. The cord near the brick was melted. Matched the CPSC #24-018 recall exactly. Please check yours immediately!</div>
+        <div class="report-footer">
+          <span class="report-author">@safemom_dc · 47 karma</span>
+          <button class="vote-btn" id="vote-1" onclick="castVote('vote-1', 33)">▲ 33</button>
+        </div>
+      </div>
+
+      <div class="report-card">
+        <div class="report-top">
+          <span class="report-tag injury">Injury Risk</span>
+          <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">1d ago</span>
+        </div>
+        <div class="report-title">Kids' helmet strap released at speed</div>
+        <div class="report-body">Brand is RideSafe, model Turbo Jr (2022). The buckle gave way mid-ride. No current recall match but worth investigating. Already submitted a report to CPSC directly.</div>
+        <div class="report-footer">
+          <span class="report-author">@dadof3_nova · 112 karma</span>
+          <button class="vote-btn" id="vote-2" onclick="castVote('vote-2', 21)">▲ 21</button>
+        </div>
+      </div>
+
+      <div class="report-card">
+        <div class="report-top">
+          <span class="report-tag electrical">Electrical</span>
+          <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">3d ago</span>
+        </div>
+        <div class="report-title">Smart plug randomly trips 20A breaker</div>
+        <div class="report-body">GoPlug Mini (2023 batch) keeps tripping the breaker every few days with nothing else on the circuit. Reached out to the brand with no response. Anyone else seeing this?</div>
+        <div class="report-footer">
+          <span class="report-author">@techmom_va · 88 karma</span>
+          <button class="vote-btn" id="vote-3" onclick="castVote('vote-3', 15)">▲ 15</button>
+        </div>
+      </div>
+
+      <div class="report-card">
+        <div class="report-top">
+          <span class="report-tag injury">Choking Risk</span>
+          <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">5d ago</span>
+        </div>
+        <div class="report-title">Small parts detach from toddler toy</div>
+        <div class="report-body">The painted eyes on BabyJoy stacking rings (lot #BJ-2023-09) pop off with moderate force. My 18-month-old almost swallowed one. Flagging here while I report to CPSC.</div>
+        <div class="report-footer">
+          <span class="report-author">@parentalert_md · 204 karma</span>
+          <button class="vote-btn" id="vote-4" onclick="castVote('vote-4', 58)">▲ 58</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PROFILE SCREEN ── -->
+    <div class="screen" id="screen-profile">
+
+      <div class="profile-hero">
+        <div class="avatar">JS</div>
+        <div style="font-size:17px;font-weight:500">Jordan S.</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px;font-family:var(--mono)">Member since Jan 2024 · Dale City, VA</div>
+        <div class="progress-bar-outer"><div class="progress-bar-inner"></div></div>
+        <div class="progress-labels">
+          <span>★ Guardian · 2,340 pts</span>
+          <span>3,000 for Protector</span>
+        </div>
+      </div>
+
+      <div class="section-title">Tier Progression</div>
+      <div class="tier-row">
+        <div class="tier"><span class="tier-name">Scout</span><span class="tier-pts">0 pts</span></div>
+        <div class="tier"><span class="tier-name">Watcher</span><span class="tier-pts">500 pts</span></div>
+        <div class="tier current"><span class="tier-name">★ Guardian</span><span class="tier-pts">1,500 pts</span></div>
+        <div class="tier"><span class="tier-name">Protector</span><span class="tier-pts">3,000 pts</span></div>
+      </div>
+
+      <div class="section-title">Rewards</div>
+      <div class="rewards-grid">
+        <div class="reward-card" onclick="alert('Redeeming $5 Amazon credit…')">
+          <div class="reward-icon">🎁</div>
+          <div class="reward-name">$5 Amazon Credit</div>
+          <div class="reward-pts">2,000 pts · Unlocked</div>
+        </div>
+        <div class="reward-card" onclick="alert('Donating 500 pts to Safe Kids Worldwide!')">
+          <div class="reward-icon">🛡️</div>
+          <div class="reward-name">Donate to Safe Kids</div>
+          <div class="reward-pts">500 pts · Available</div>
+        </div>
+        <div class="reward-card locked">
+          <div class="reward-icon">🏷️</div>
+          <div class="reward-name">Target 10% Off</div>
+          <div class="reward-pts">3,000 pts · Locked</div>
+        </div>
+        <div class="reward-card locked">
+          <div class="reward-icon">🏅</div>
+          <div class="reward-name">CPSC Certificate</div>
+          <div class="reward-pts">5,000 pts · Locked</div>
+        </div>
+      </div>
+
+      <div class="section-title">My Activity</div>
+      <div class="activity-table">
+        <div class="activity-row"><span>Items scanned</span><span>34</span></div>
+        <div class="activity-row"><span>Recalls confirmed</span><span>3</span></div>
+        <div class="activity-row"><span>Community reports</span><span>2</span></div>
+        <div class="activity-row"><span>Upvotes given</span><span>18</span></div>
+        <div class="activity-row"><span>Pts donated</span><span>500</span></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- ══════════════════════════════════
+       COMMUNITY MODAL
+  ══════════════════════════════════ -->
+  <div class="modal-overlay" id="community-modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeCommunityModal()">✕</button>
+      <div style="padding: 14px 16px 20px;">
+        <div class="screen" id="screen-community-modal">
+          <div class="section-title">Community Safety Board</div>
+
+          <button class="new-report-btn" onclick="alert('Open report submission form — +25 pts for verified reports!')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Submit a Safety Report · +25 pts
+          </button>
+
+          <div class="report-card">
+            <div class="report-top">
+              <span class="report-tag fire">Fire Hazard</span>
+              <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">2h ago</span>
+            </div>
+            <div class="report-title">Sparks from Voltex charger — cord melted overnight</div>
+            <div class="report-body">Plugged in overnight and woke up to a burning smell. The cord near the brick was melted. Matched the CPSC #24-018 recall exactly. Please check yours immediately!</div>
+            <div class="report-footer">
+              <span class="report-author">@safemom_dc · 47 karma</span>
+              <button class="vote-btn" id="vote-1-m" onclick="castVote('vote-1-m', 33)">▲ 33</button>
+            </div>
+          </div>
+
+          <div class="report-card">
+            <div class="report-top">
+              <span class="report-tag injury">Injury Risk</span>
+              <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">1d ago</span>
+            </div>
+            <div class="report-title">Kids' helmet strap released at speed</div>
+            <div class="report-body">Brand is RideSafe, model Turbo Jr (2022). The buckle gave way mid-ride. No current recall match but worth investigating. Already submitted a report to CPSC directly.</div>
+            <div class="report-footer">
+              <span class="report-author">@dadof3_nova · 112 karma</span>
+              <button class="vote-btn" id="vote-2-m" onclick="castVote('vote-2-m', 21)">▲ 21</button>
+            </div>
+          </div>
+
+          <div class="report-card">
+            <div class="report-top">
+              <span class="report-tag electrical">Electrical</span>
+              <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">3d ago</span>
+            </div>
+            <div class="report-title">Smart plug randomly trips 20A breaker</div>
+            <div class="report-body">GoPlug Mini (2023 batch) keeps tripping the breaker every few days with nothing else on the circuit. Reached out to the brand with no response. Anyone else seeing this?</div>
+            <div class="report-footer">
+              <span class="report-author">@techmom_va · 88 karma</span>
+              <button class="vote-btn" id="vote-3-m" onclick="castVote('vote-3-m', 15)">▲ 15</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app-shell -->
+
+<script>
+  /* ── Data ── */
+  const PRODUCTS = [
+    {
+      name: "Braxton Folding Chair Pro",
+      sku: "8847-CH · CPSC #24-002",
+      icon: "🪑",
+      iconBg: "rgba(232,85,85,0.15)",
+      status: "recalled",
+      badgeClass: "recalled",
+      badgeText: "⚠ RECALLED",
+      detail: "<strong>Hazard:</strong> Seat can collapse unexpectedly, posing fall and injury risk. Affects model years 2021–2023. Over 142,000 units sold nationwide. Stop use immediately.",
+      ptsMsg: "⚠ Recalled item — confirm action below for +30 bonus pts",
+      showActions: true,
+    },
+    {
+      name: "Voltex USB-C Charger 65W",
+      sku: "VC65W-BLK · CPSC #24-018",
+      icon: "🔌",
+      iconBg: "rgba(232,85,85,0.15)",
+      status: "recalled",
+      badgeClass: "recalled",
+      badgeText: "⚠ RECALLED",
+      detail: "<strong>Hazard:</strong> Overheating and fire risk. Cord insulation melts near the charging brick. Affects units sold Jan–Aug 2023. Unplug and stop using immediately.",
+      ptsMsg: "⚠ Recalled item — confirm action below for +30 bonus pts",
+      showActions: true,
+    },
+    {
+      name: "GE Smart Bulb 4-Pack",
+      sku: "GE-SB4-WHT-2023 · Verified Safe",
+      icon: "💡",
+      iconBg: "rgba(63,182,139,0.15)",
+      status: "safe",
+      badgeClass: "safe",
+      badgeText: "✓ SAFE",
+      detail: "No recalls or advisories found in the CPSC database. This product is clear and safe to use. Good news!",
+      ptsMsg: "All clear — no recalls found for this product",
+      showActions: false,
+    },
+    {
+      name: "Luna Candle Set (3pk)",
+      sku: "LCS-003-LAV · Advisory Issued",
+      icon: "🕯️",
+      iconBg: "rgba(240,129,74,0.15)",
+      status: "warning",
+      badgeClass: "warning",
+      badgeText: "! ADVISORY",
+      detail: "<span class='warn-strong'>Advisory:</span> Wick debris may cause unexpected wax splatter. Keep away from flammable materials and always use with a proper fireproof holder. Never leave unattended.",
+      ptsMsg: "Safety advisory found — review the guidance below",
+      showActions: false,
+    },
+  ];
+
+  let scanIdx = 0;
+  let totalPoints = 2340;
+
+  /* ── Product Lookup ── */
+  function findProductByName(searchTerm) {
+    const term = searchTerm.toLowerCase().trim();
+    return PRODUCTS.find(p => p.name.toLowerCase().includes(term));
+  }
+
+  /* ── Live Clock ── */
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.getHours().toString().padStart(2, '0') + ':' +
+      now.getMinutes().toString().padStart(2, '0');
+  }
+  updateClock();
+  setInterval(updateClock, 30000);
+
+  /* ── Navigation ── */
+  function showScreen(id, btn) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+  }
+
+  /* ── Community Modal ── */
+  function openCommunityModal() {
+    const modal = document.getElementById('community-modal');
+    modal.classList.add('active');
+  }
+
+  function closeCommunityModal() {
+    const modal = document.getElementById('community-modal');
+    modal.classList.remove('active');
+  }
+
+  // Close modal when clicking on the overlay background
+  document.addEventListener('click', function(event) {
+    const modal = document.getElementById('community-modal');
+    if (event.target === modal) {
+      closeCommunityModal();
+    }
+  });
+
+  /* ── Scanner ── */
+  function simulateScan(productName = null) {
+    let p;
+    
+    if (productName) {
+      // Search by product name
+      p = findProductByName(productName);
+      if (!p) {
+        alert('Product not found. Try: "Chair", "Charger", "Bulb", or "Candle"');
+        return;
+      }
+    } else {
+      // Cycle through products
+      p = PRODUCTS[scanIdx % PRODUCTS.length];
+      scanIdx++;
+    }
+
+    document.getElementById('scan-idle').style.display   = 'none';
+    document.getElementById('scan-result').style.display = 'block';
+
+    document.getElementById('result-name').textContent    = p.name;
+    document.getElementById('result-sku').textContent     = p.sku;
+    document.getElementById('result-pts').textContent     = '+10';
+    document.getElementById('result-status-msg').textContent = p.ptsMsg;
+
+    const icon = document.getElementById('result-icon');
+    icon.textContent     = p.icon;
+    icon.style.background = p.iconBg;
+
+    const badge = document.getElementById('result-badge');
+    badge.className   = 'status-badge ' + p.badgeClass;
+    badge.textContent = p.badgeText;
+
+    document.getElementById('result-detail').innerHTML = p.detail;
+
+    const actionsEl = document.getElementById('result-actions');
+    if (p.showActions) {
+      actionsEl.innerHTML = `
+        <button class="action-btn danger"   onclick="confirmAction('dispose')">Mark Disposed</button>
+        <button class="action-btn"           onclick="addToInventoryFromScan()">Add to Inventory</button>
+        <button class="action-btn success"   onclick="confirmAction('replaced')">Got Replacement</button>
+      `;
+    } else {
+      actionsEl.innerHTML = `
+        <button class="action-btn" onclick="addToInventoryFromScan()">Add to Inventory</button>
+      `;
+    }
+
+    addPoints(10);
+  }
+
+  function simulateScanUnknown() {
+    // Simulate scanning an item not in the database
+    const unknownProduct = {
+      name: "Unknown Product XYZ",
+      sku: "UNK-XYZ-001 · Not Found",
+      icon: "📦",
+      iconBg: "rgba(200, 200, 200, 0.15)",
+      status: "unknown",
+      badgeClass: "warning",
+      badgeText: "? NOT FOUND",
+      detail: "This product is not currently in the CPSC database. It may be a new product, imported item, or private label. Have you experienced any safety concerns with this item? Consider submitting a report to the community to help keep others informed.",
+      ptsMsg: "Item not in database — help expand CPSC coverage",
+      showActions: false,
+    };
+
+    document.getElementById('scan-idle').style.display   = 'none';
+    document.getElementById('scan-result').style.display = 'block';
+
+    document.getElementById('result-name').textContent    = unknownProduct.name;
+    document.getElementById('result-sku').textContent     = unknownProduct.sku;
+    document.getElementById('result-pts').textContent     = '+5';
+    document.getElementById('result-status-msg').textContent = unknownProduct.ptsMsg;
+
+    const icon = document.getElementById('result-icon');
+    icon.textContent     = unknownProduct.icon;
+    icon.style.background = unknownProduct.iconBg;
+
+    const badge = document.getElementById('result-badge');
+    badge.className   = 'status-badge ' + unknownProduct.badgeClass;
+    badge.textContent = unknownProduct.badgeText;
+
+    document.getElementById('result-detail').innerHTML = unknownProduct.detail;
+
+    const actionsEl = document.getElementById('result-actions');
+    actionsEl.innerHTML = `
+      <button class="action-btn" onclick="addToInventoryFromScan()">Add to Inventory</button>
+      <button class="action-btn" onclick="alert('Open community report form for this product…')">Report to Community</button>
+    `;
+
+    addPoints(5);
+  }
+
+  function confirmAction(type) {
+    addPoints(30);
+    document.getElementById('result-pts').textContent = '+40';
+    document.getElementById('result-status-msg').textContent = '★ Action confirmed — 30 bonus pts earned!';
+    document.getElementById('result-actions').innerHTML =
+      '<div class="action-confirm">✓ Action recorded. Thank you for keeping your home safe.</div>';
+  }
+
+  function addToInventoryFromScan() {
+    document.getElementById('result-actions').innerHTML =
+      '<div class="action-confirm">✓ Added to your inventory.</div>';
+  }
+
+  function resetScan() {
+    document.getElementById('scan-idle').style.display   = 'block';
+    document.getElementById('scan-result').style.display = 'none';
+    document.getElementById('manual-bar').value = '';
+  }
+
+  /* ── Points ── */
+  function addPoints(n) {
+    totalPoints += n;
+    document.getElementById('total-pts').textContent = totalPoints.toLocaleString() + ' pts';
+  }
+
+  /* ── Community Votes ── */
+  function castVote(id, base) {
+    const btn = document.getElementById(id);
+    if (btn.classList.contains('voted')) {
+      btn.classList.remove('voted');
+      btn.textContent = '▲ ' + base;
+    } else {
+      btn.classList.add('voted');
+      btn.textContent = '▲ ' + (base + 1);
+      addPoints(2);
+    }
+  }
+</script>
+</body>
+</html>
